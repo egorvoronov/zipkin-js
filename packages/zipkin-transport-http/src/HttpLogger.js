@@ -7,13 +7,15 @@ const globalFetch =
 const fetch = globalFetch || require.call(null, 'node-fetch');
 
 const {
-  jsonEncoder: {JSON_V1}
+  jsonEncoder: { JSON_V1 }
 } = require('zipkin');
 
 const EventEmitter = require('events').EventEmitter;
 
+let logging;
+
 class HttpLogger extends EventEmitter {
-  constructor({endpoint, headers = {}, httpInterval = 1000, jsonEncoder = JSON_V1, timeout = 0}) {
+  constructor({ endpoint, headers = {}, httpInterval = 1000, jsonEncoder = JSON_V1, timeout = 0 }) {
     super(); // must be before any reference to *this*
     this.endpoint = endpoint;
     this.queue = [];
@@ -39,7 +41,7 @@ class HttpLogger extends EventEmitter {
   }
 
   on(...args) {
-    const eventName = args[0];
+    const eventName = args[ 0 ];
     // if the instance has an error handler set then we don't need to
     // console.log errors anymore
     if (eventName.toLowerCase() === 'error') this.errorListenerSet = true;
@@ -54,6 +56,7 @@ class HttpLogger extends EventEmitter {
     const self = this;
     if (self.queue.length > 0) {
       const postBody = `[${self.queue.join(',')}]`;
+      logging && logging.info('Zipkin postBody to send', postBody);
       fetch(self.endpoint, {
         method: 'POST',
         body: postBody,
@@ -78,3 +81,7 @@ class HttpLogger extends EventEmitter {
 }
 
 module.exports = HttpLogger;
+
+module.exports.setLogging = function (newLogging) {
+  logging = newLogging;
+};
